@@ -1,0 +1,1681 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Community Lobby</title>
+    <link rel="stylesheet" href="assets/fonts/agency.css">
+    <link rel="stylesheet" href="assets/fonts/overpass.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body onload="createRole()">
+    
+    <div id="connect-screen">
+        <div class="connect-hint-text">
+            Attention!<br>
+            This project is completely open source and free to download and play. You can check Github for the source code.<br>
+            Project by OG:BG (PUBG2017PS).<br>
+            <a href="javascript:void(0)" onclick="openGithub()">https://github.com/h4tiux/PUBG2017PS</a><br>
+            <a href="javascript:void(0)" onclick="openWebsite()">https://ogbattlegrounds.ru</a><br><br>
+            If you would like to support this project, please consider sponsoring us.<br>
+            <a href="javascript:void(0)" onclick="openSponsor()">https://xmrchat.com/h4tiux</a>
+        </div>
+    </div>
+
+    <div id="loading-screen">
+        <div class="loading-content">
+            <img src="assets/images/icons/logo.svg" alt="Logo" class="loading-logo" id="loading-logo-img">
+            <div class="loading-text" id="loading-stage-text">Initializing...</div>
+            <div class="loading-progress-bar"></div>
+        </div>
+    </div>
+    <img id="preload-bg" src="assets/images/backgrounds/bg_intro_terms.jpg" style="display:none;">
+
+    <div class="main">
+    <div id="app" :class="{'localed': language != 'en', 'animations-ready': animationsReady}">
+        <!-- 全局水印 (已注释 - 留以后开发)
+        <div class="dev-watermark">
+            <template v-for="(line, index) in watermarkLines">
+                <div :key="index" class="watermark-line" :class="{'bold-line': index % 4 === 0}" :style="{left: line.x + 'px', top: line.y + 'px'}">{{ line.text }}</div>
+            </template>
+        </div>
+        水印HTML结束 -->
+        
+        <!-- Logo moved to bottom right -->
+        <img class="title-image-bottom-right" src="assets/images/icons/logo.svg" alt="" onclick="openWebsite()">
+        
+<!-- 底部文字板块 -->
+        <p class="serial-text">Early Access v2.6.30.4</p> 
+<!-- 底部文字结束 -->
+
+        <!-- Tab Content Area -->
+        <div>
+        <div v-if="activeTab === 'home'">
+            <!-- OGBG Friends (已注释 - 留以后开发)
+            <div class="friends-bar" v-if="controlsLoaded.friendsBar" :class="{'control-appear': controlsLoaded.friendsBar}" @click="toggleFriendsList">
+                <img src="assets/images/icons/friend.png" class="friends-icon" alt="Friends">
+                <span class="friends-text">OG:BG Friends 3 / 4</span>
+            </div>
+            
+            <div class="friends-list-container" :class="{'show': showFriendsList}">
+                <div class="friends-list-header">
+                    <span>OG:BG Friends</span>
+                    <button class="refresh-button">Refresh</button>
+                </div>
+                <div class="friends-list">
+                    <div class="friend-item" v-for="friend in friendsList" :key="friend.name" @click="selectFriend(friend)" :class="{'selected': selectedFriend && selectedFriend.name === friend.name}">
+                        <img :src="friend.avatar" class="friend-avatar" alt="Avatar">
+                        <div class="friend-info">
+                            <div class="friend-name">{{ friend.name }}</div>
+                            <div class="friend-status" :class="friend.status">{{ friend.status }}</div>
+                        </div>
+                        <button class="invite-button" v-if="friend.status === 'online'">INVITE</button>
+                    </div>
+                </div>
+                
+                <div class="friend-action-dropdown" v-if="selectedFriend" :class="{'show': showFriendActions}">
+                    <button class="friend-action-button view-button" @click="viewFriendProfile">VIEW PROFILE</button>
+                    <button class="friend-action-button invite-button" @click="inviteFriend" v-if="selectedFriend.status === 'online'">INVITE</button>
+                </div>
+            </div>
+            
+            <button class="receive-invite-button" @click="toggleTickMark">
+                <img v-if="tickMarkEnabled" src="assets/images/icons/tick_mark_true.png" class="tick-mark" alt="Online">
+                <img v-else src="assets/images/icons/tick_mark_false.png" class="tick-mark" alt="Offline">
+                RECEIVE INVITE
+            </button>
+            OGBG Friends 注释结束 -->
+            
+            <!-- 聊天框 (原OGBG Friends位置) -->
+            <div class="chat-box" :class="{ 'collapsed': chatCollapsed }">
+                <div class="chat-header" @click="toggleChat">
+                    <span class="chat-title">CHAT</span>
+                    <span class="chat-toggle">▼</span>
+                </div>
+                
+                <!-- 最新消息预览（收起时显示） -->
+                <div class="latest-message-preview" id="latest-message-preview" @click.stop="toggleChat">
+                    <span class="latest-message-preview-text" id="latest-message-text">Welcome to the lobby!</span>
+                </div>
+                
+                <div class="chat-messages">
+                    <div class="chat-message system-message">
+                        <span class="chat-text system-text">Welcome to the lobby!</span>
+                    </div>
+                </div>
+                <div class="chat-input-container">
+                    <input type="text" class="chat-input" placeholder="Type message..." @keyup.enter="sendMessage">
+                    <button class="chat-send" @click="sendMessage">Send</button>
+                </div>
+            </div>
+<!-- 选择框、开始按钮板块 -->
+        <div class="game-play-container-top-left" v-if="controlsLoaded.multiButton">
+            <div class="button-container">
+                <div class="multi-layer-button bro-loading"
+                     id="join"
+                     :class="{'active-hover': showServerDropdown, 'bro-loading': isLoading, 'matching-state': isMatching}"
+                     @mouseenter="!isMatching && (showServerDropdown = true)" 
+                     @mouseleave="!isMatching && (showServerDropdown = false)"
+                     @click="isMatching ? cancelMatching() : joinServer()">
+                    <img src="assets/images/buttons/btn_layer_1.png" alt="Button Layer 1" class="button-layer layer-1">
+                    <img src="assets/images/buttons/btn_layer_2.png" alt="Button Layer 2" class="button-layer layer-2">
+                    <img src="assets/images/buttons/btn_layer_3.png" alt="Button Layer 3" class="button-layer layer-3">
+                    <!-- PUBG Title on Button -->
+                    <div class="pubg-title-on-button">
+                        <div class="play-text">{{ playText }}</div>
+                        <div class="tips-text-container">
+                            <div class="tips-text default-text" :class="{'matching-highlight': isMatching}">{{ battlegroundsText }}</div>
+                            <div class="tips-text hover-text">{{ isMatching ? 'CLICK TO CANCEL' : 'CLICK TO PLAY' }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="join-server-container" id="server-dropdown" :class="{'show': showServerDropdown}" @mouseenter="!isMatching && (showServerDropdown = true)" @mouseleave="!isMatching && (showServerDropdown = false)">
+                    <div class="dropdown-section">
+                        <div class="dropdown-header">REGION</div>
+                        <button v-for="server in serverList"
+                                v-bind:class="{'sel-server-button': true, 'active': server.name === currentServer.name}"
+                                :id="server.name"
+                                v-on:click="selectServer(server)">
+                                <img class="checkmark" v-if="server.name === currentServer.name" src="assets/images/icons/tick_mark_true.png" alt="Selected">
+                                {{ server.name }}
+                        </button>
+                    </div>
+                    <!-- <div class="dropdown-section">
+                        <div class="dropdown-header">TEAM</div>
+                        <button v-for="team in teamList"
+                                v-bind:class="{'sel-server-button': true, 'active': team === currentTeam}"
+                                :id="team"
+                                v-on:click="selectTeam(team)">
+                                <img class="checkmark" v-if="team === currentTeam" src="assets/images/icons/tick_mark_true.png" alt="Selected">
+                                {{ team }}
+                        </button>
+                    </div> -->
+                    <button class="custom-match-button" @click="joinCustomMatch">
+                        CUSTOM MATCH
+                    </button>
+                </div>
+        </div>
+
+        <!-- 匹配状态提示 -->
+        <div class="center-bar-test" v-if="showMatchmakingNotice && controlsVisible && isMatching">Started matchmaking</div>
+        
+        <!-- 聊天输入为空提示 -->
+        <div class="center-bar-test" v-if="showEmptyMessageNotice">Message cannot be empty</div>
+        </div>
+
+        <div v-if="activeTab === 'character'" class="tab-content">
+            <!-- Friends Bar -->
+            <div class="friends-bar" @click="toggleFriendsList">
+                <img src="assets/images/icons/friend.png" class="friends-icon" alt="Friends">
+                <span class="friends-text">OG:BG Friends 3 / 4</span>
+            </div>
+            
+            <!-- Friends List Dropdown -->
+            <div class="friends-list-container" :class="{'show': showFriendsList}">
+                <div class="friends-list-header">
+                    <span>OG:BG Friends</span>
+                    <button class="refresh-button">Refresh</button>
+                </div>
+                <div class="friends-list">
+                    <div class="friend-item" v-for="friend in friendsList" :key="friend.name" @click="selectFriend(friend)" :class="{'selected': selectedFriend && selectedFriend.name === friend.name}">
+                        <img :src="friend.avatar" class="friend-avatar" alt="Avatar">
+                        <div class="friend-info">
+                            <div class="friend-name">{{ friend.name }}</div>
+                            <div class="friend-status" :class="friend.status">{{ friend.status }}</div>
+                        </div>
+                        <button class="invite-button" v-if="friend.status === 'online'">INVITE</button>
+                    </div>
+                </div>
+                
+                <!-- Friend Action Dropdown -->
+                <div class="friend-action-dropdown" v-if="selectedFriend" :class="{'show': showFriendActions}">
+                    <button class="friend-action-button view-button" @click="viewFriendProfile">VIEW PROFILE</button>
+                    <button class="friend-action-button invite-button" @click="inviteFriend" v-if="selectedFriend.status === 'online'">INVITE</button>
+                </div>
+            </div>
+            
+            <!-- Receive Invite Button -->
+            <button class="receive-invite-button" @click="toggleTickMark">
+                <img v-if="tickMarkEnabled" src="assets/images/icons/tick_mark_true.png" class="tick-mark" alt="Online">
+                <img v-else src="assets/images/icons/tick_mark_false.png" class="tick-mark" alt="Offline">
+                RECEIVE INVITE
+            </button>
+            
+            <!-- 选择框、开始按钮板块 -->
+            <div class="game-play-container-top-left">
+                <div class="button-container">
+                    <div class="multi-layer-button bro-loading" 
+                         id="join" 
+                         :class="{'active-hover': showServerDropdown, 'bro-loading': isLoading, 'matching-state': isMatching}" 
+                         @mouseenter="!isMatching && (showServerDropdown = true)" 
+                         @mouseleave="!isMatching && (showServerDropdown = false)" 
+                         @click="isMatching ? cancelMatching() : joinServer()">
+                        <img src="assets/images/buttons/btn_layer_1.png" alt="Button Layer 1" class="button-layer layer-1">
+                        <img src="assets/images/buttons/btn_layer_2.png" alt="Button Layer 2" class="button-layer layer-2">
+                        <img src="assets/images/buttons/btn_layer_3.png" alt="Button Layer 3" class="button-layer layer-3">
+                        <!-- PUBG Title on Button -->
+                        <div class="pubg-title-on-button">
+                            <div class="play-text">{{ playText }}</div>
+                        <div class="tips-text-container">
+                            <div class="tips-text default-text" :class="{'matching-highlight': isMatching}">{{ battlegroundsText }}</div>
+                            <div class="tips-text hover-text">{{ isMatching ? 'CLICK TO CANCEL' : 'CLICK TO PLAY' }}</div>
+                        </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="join-server-container" id="server-dropdown" :class="{'show': showServerDropdown}" @mouseenter="!isMatching && (showServerDropdown = true)" @mouseleave="!isMatching && (showServerDropdown = false)">
+                    <div class="dropdown-section">
+                        <div class="dropdown-header">REGION</div>
+                        <button v-for="server in serverList" 
+                                v-bind:class="{'sel-server-button': true, 'active': server.name === currentServer.name}" 
+                                :id="server.name" 
+                                v-on:click="selectServer(server)">
+                                <img class="checkmark" v-if="server.name === currentServer.name" src="assets/images/icons/tick_mark_true.png" alt="Selected">
+                                {{ server.name }}
+                        </button>
+                    </div>
+                    <!-- <div class="dropdown-section">
+                        <div class="dropdown-header">TEAM</div>
+                        <button v-for="team in teamList" 
+                                v-bind:class="{'sel-server-button': true, 'active': team === currentTeam}" 
+                                :id="team" 
+                                v-on:click="selectTeam(team)">
+                                <img class="checkmark" v-if="team === currentTeam" src="assets/images/icons/tick_mark_true.png" alt="Selected">
+                                {{ team }}
+                        </button>
+                    </div> -->
+                    <button class="custom-match-button" @click="joinCustomMatch">
+                        CUSTOM MATCH
+                    </button>
+                </div>
+            </div>
+            <div class="character-tab">
+                <h2>Character Management</h2>
+                <p>Character settings and customization options would go here.</p>
+            </div>
+        </div>
+
+        <div v-if="activeTab === 'rewards'" class="tab-content">
+            <!-- Friends Bar -->
+            <div class="friends-bar" @click="toggleFriendsList">
+                <img src="assets/images/icons/friend.png" class="friends-icon" alt="Friends">
+                <span class="friends-text">OG:BG Friends 3 / 4</span>
+            </div>
+            
+            <!-- Friends List Dropdown -->
+            <div class="friends-list-container" :class="{'show': showFriendsList}">
+                <div class="friends-list-header">
+                    <span>OG:BG Friends</span>
+                    <button class="refresh-button">Refresh</button>
+                </div>
+                <div class="friends-list">
+                    <div class="friend-item" v-for="friend in friendsList" :key="friend.name" @click="selectFriend(friend)" :class="{'selected': selectedFriend && selectedFriend.name === friend.name}">
+                        <img :src="friend.avatar" class="friend-avatar" alt="Avatar">
+                        <div class="friend-info">
+                            <div class="friend-name">{{ friend.name }}</div>
+                            <div class="friend-status" :class="friend.status">{{ friend.status }}</div>
+                        </div>
+                        <button class="invite-button" v-if="friend.status === 'online'">INVITE</button>
+                    </div>
+                </div>
+                
+                <!-- Friend Action Dropdown -->
+                <div class="friend-action-dropdown" v-if="selectedFriend" :class="{'show': showFriendActions}">
+                    <button class="friend-action-button view-button" @click="viewFriendProfile">VIEW PROFILE</button>
+                    <button class="friend-action-button invite-button" @click="inviteFriend" v-if="selectedFriend.status === 'online'">INVITE</button>
+                </div>
+            </div>
+            
+            <!-- Receive Invite Button -->
+            <button class="receive-invite-button" @click="toggleTickMark">
+                <img v-if="tickMarkEnabled" src="assets/images/icons/tick_mark_true.png" class="tick-mark" alt="Online">
+                <img v-else src="assets/images/icons/tick_mark_false.png" class="tick-mark" alt="Offline">
+                RECEIVE INVITE
+            </button>
+            
+            <!-- 选择框、开始按钮板块 -->
+            <div class="game-play-container-top-left">
+                <div class="button-container">
+                    <div class="multi-layer-button bro-loading" 
+                         id="join" 
+                         :class="{'active-hover': showServerDropdown, 'bro-loading': isLoading, 'matching-state': isMatching}" 
+                         @mouseenter="!isMatching && (showServerDropdown = true)" 
+                         @mouseleave="!isMatching && (showServerDropdown = false)" 
+                         @click="isMatching ? cancelMatching() : joinServer()">
+                        <img src="assets/images/buttons/btn_layer_1.png" alt="Button Layer 1" class="button-layer layer-1">
+                        <img src="assets/images/buttons/btn_layer_2.png" alt="Button Layer 2" class="button-layer layer-2">
+                        <img src="assets/images/buttons/btn_layer_3.png" alt="Button Layer 3" class="button-layer layer-3">
+                        <!-- PUBG Title on Button -->
+                        <div class="pubg-title-on-button">
+                            <div class="play-text">{{ playText }}</div>
+                            <div class="tips-text-container">
+                                <div class="tips-text default-text" :class="{'matching-highlight': isMatching}">{{ battlegroundsText }}</div>
+                                <div class="tips-text hover-text">{{ isMatching ? 'CLICK TO CANCEL' : 'CLICK TO PLAY' }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="join-server-container" id="server-dropdown" :class="{'show': showServerDropdown}" @mouseenter="!isMatching && (showServerDropdown = true)" @mouseleave="!isMatching && (showServerDropdown = false)">
+                    <div class="dropdown-section">
+                        <div class="dropdown-header">REGION</div>
+                        <button v-for="server in serverList" 
+                                v-bind:class="{'sel-server-button': true, 'active': server.name === currentServer.name}" 
+                                :id="server.name" 
+                                v-on:click="selectServer(server)">
+                                <img class="checkmark" v-if="server.name === currentServer.name" src="assets/images/icons/tick_mark_true.png" alt="Selected">
+                                {{ server.name }}
+                        </button>
+                    </div>
+                    <!-- <div class="dropdown-section">
+                        <div class="dropdown-header">TEAM</div>
+                        <button v-for="team in teamList" 
+                                v-bind:class="{'sel-server-button': true, 'active': team === currentTeam}" 
+                                :id="team" 
+                                v-on:click="selectTeam(team)">
+                                <img class="checkmark" v-if="team === currentTeam" src="assets/images/icons/tick_mark_true.png" alt="Selected">
+                                {{ team }}
+                        </button>
+                    </div> -->
+                    <button class="custom-match-button" @click="joinCustomMatch">
+                        CUSTOM MATCH
+                    </button>
+                </div>
+            </div>
+            <div class="rewards-tab">
+                <h2>Rewards & Achievements</h2>
+                <p>Your rewards and achievements would be displayed here.</p>
+            </div>
+        </div>
+
+        <div v-if="activeTab === 'statistics'" class="tab-content">
+            <!-- Friends Bar -->
+            <div class="friends-bar" @click="toggleFriendsList">
+                <img src="assets/images/icons/friend.png" class="friends-icon" alt="Friends">
+                <span class="friends-text">OG:BG Friends 3 / 4</span>
+            </div>
+            
+            <!-- Friends List Dropdown -->
+            <div class="friends-list-container" :class="{'show': showFriendsList}">
+                <div class="friends-list-header">
+                    <span>OG:BG Friends</span>
+                    <button class="refresh-button">Refresh</button>
+                </div>
+                <div class="friends-list">
+                    <div class="friend-item" v-for="friend in friendsList" :key="friend.name" @click="selectFriend(friend)" :class="{'selected': selectedFriend && selectedFriend.name === friend.name}">
+                        <img :src="friend.avatar" class="friend-avatar" alt="Avatar">
+                        <div class="friend-info">
+                            <div class="friend-name">{{ friend.name }}</div>
+                            <div class="friend-status" :class="friend.status">{{ friend.status }}</div>
+                        </div>
+                        <button class="invite-button" v-if="friend.status === 'online'">INVITE</button>
+                    </div>
+                </div>
+                
+                <!-- Friend Action Dropdown -->
+                <div class="friend-action-dropdown" v-if="selectedFriend" :class="{'show': showFriendActions}">
+                    <button class="friend-action-button view-button" @click="viewFriendProfile">VIEW PROFILE</button>
+                    <button class="friend-action-button invite-button" @click="inviteFriend" v-if="selectedFriend.status === 'online'">INVITE</button>
+                </div>
+            </div>
+            
+            <!-- Receive Invite Button -->
+            <button class="receive-invite-button" @click="toggleTickMark">
+                <img v-if="tickMarkEnabled" src="assets/images/icons/tick_mark_true.png" class="tick-mark" alt="Online">
+                <img v-else src="assets/images/icons/tick_mark_false.png" class="tick-mark" alt="Offline">
+                RECEIVE INVITE
+            </button>
+            
+            <!-- 选择框、开始按钮板块 -->
+            <div class="game-play-container-top-left">
+                <div class="button-container">
+                    <div class="multi-layer-button bro-loading" 
+                         id="join" 
+                         :class="{'active-hover': showServerDropdown, 'bro-loading': isLoading, 'matching-state': isMatching}" 
+                         @mouseenter="!isMatching && (showServerDropdown = true)" 
+                         @mouseleave="!isMatching && (showServerDropdown = false)" 
+                         @click="isMatching ? cancelMatching() : joinServer()">
+                        <img src="assets/images/buttons/btn_layer_1.png" alt="Button Layer 1" class="button-layer layer-1">
+                        <img src="assets/images/buttons/btn_layer_2.png" alt="Button Layer 2" class="button-layer layer-2">
+                        <img src="assets/images/buttons/btn_layer_3.png" alt="Button Layer 3" class="button-layer layer-3">
+                        <!-- PUBG Title on Button -->
+                        <div class="pubg-title-on-button">
+                            <div class="play-text">{{ playText }}</div>
+                            <div class="tips-text-container">
+                                <div class="tips-text default-text" :class="{'matching-highlight': isMatching}">{{ battlegroundsText }}</div>
+                                <div class="tips-text hover-text">{{ isMatching ? 'CLICK TO CANCEL' : 'CLICK TO PLAY' }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="join-server-container" id="server-dropdown" :class="{'show': showServerDropdown}" @mouseenter="!isMatching && (showServerDropdown = true)" @mouseleave="!isMatching && (showServerDropdown = false)">
+                    <div class="dropdown-section">
+                        <div class="dropdown-header">REGION</div>
+                        <button v-for="server in serverList" 
+                                v-bind:class="{'sel-server-button': true, 'active': server.name === currentServer.name}" 
+                                :id="server.name" 
+                                v-on:click="selectServer(server)">
+                                <img class="checkmark" v-if="server.name === currentServer.name" src="assets/images/icons/tick_mark_true.png" alt="Selected">
+                                {{ server.name }}
+                        </button>
+                    </div>
+                    <!-- <div class="dropdown-section">
+                        <div class="dropdown-header">TEAM</div>
+                        <button v-for="team in teamList" 
+                                v-bind:class="{'sel-server-button': true, 'active': team === currentTeam}" 
+                                :id="team" 
+                                v-on:click="selectTeam(team)">
+                                <img class="checkmark" v-if="team === currentTeam" src="assets/images/icons/tick_mark_true.png" alt="Selected">
+                                {{ team }}
+                        </button>
+                    </div> -->
+                    <button class="custom-match-button" @click="joinCustomMatch">
+                        CUSTOM MATCH
+                    </button>
+                </div>
+            </div>
+            <div class="statistics-tab">
+                <h2>Statistics</h2>
+                <p>Your game statistics would be displayed here.</p>
+            </div>
+        </div>
+        </div>
+
+<!-- 服务器玩家数量 -->
+
+<!-- 右上角区域 -->
+        <div class="top-right-area">
+            <!-- 右上角控制区 -->
+            <div class="top-right-controls">
+                <!-- 顶部导航栏 -->
+                <div class="top-navigation">
+                    <div class="nav-item" :class="{ 'active': activeTab === 'home' }" @click="changeTab('home')">HOME</div>
+                    <div class="nav-item animate-item" :class="{ 'active': activeTab === 'character' }" @click="changeTab('character')">CHARACTER</div>
+                    <div class="nav-item animate-item" :class="{ 'active': activeTab === 'rewards' }" @click="changeTab('rewards')">REWARDS</div>
+                    <div class="nav-item animate-item" :class="{ 'active': activeTab === 'statistics' }" @click="changeTab('statistics')">STATISTICS</div>
+                </div>
+                
+                <!-- 系统按钮占位符 -->
+                <div class="system-buttons-placeholder"></div>
+            </div>
+            
+ <!-- 玩家信息 -->
+<div class="player-info" v-if="controlsLoaded.playerInfo" :class="{'control-appear': controlsLoaded.playerInfo}">
+    <div class="player-name" id="chat-username" title="Click to change nickname" @click.stop="toggleNicknameEdit">{{ Player }}</div>
+
+    <div class="player-bp">
+        <img src="assets/images/icons/bp.png" class="bp-icon">
+        <span class="bp-amount">{{ BP }}</span>
+    </div>
+</div>
+
+<!-- 昵称编辑区域（独立于Vue控制，防止失去焦点） -->
+<div class="nickname-edit-container-player" id="nickname-edit" style="display: none;">
+    <input type="text" class="nickname-input" id="nickname-input" placeholder="Enter nickname..." maxlength="20">
+    <button class="nickname-save" id="nickname-save-btn">Save</button>
+    <button class="nickname-cancel" id="nickname-cancel-btn">Cancel</button>
+</div>
+
+<!-- 单独公告区域 -->
+        <div class="announcement-panel" v-if="controlsLoaded.announcementPanel" :class="{'control-appear': controlsLoaded.announcementPanel}">
+            <div class="announcement-header">SERVER STATUS</div>
+            <div class="announcement-content">
+                <div class="announcement-item">
+                    <span class="status-dot online"></span>
+                    <span class="status-text">AS Server - Online</span>
+                </div>
+                <div class="announcement-item">
+                    <span class="status-dot online"></span>
+                    <span class="status-text">EU Server - Online</span>
+                </div>
+                <div class="announcement-item">
+                    <span class="status-dot online"></span>
+                    <span class="status-text">SA Server - Online</span>
+                </div>
+                <div class="announcement-hint">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" stroke="#E3B62F" stroke-width="2"/>
+                        <line x1="12" y1="8" x2="12" y2="12" stroke="#E3B62F" stroke-width="2" stroke-linecap="round"/>
+                        <circle cx="12" cy="16" r="1" fill="#E3B62F"/>
+                    </svg>
+                    <span>This is a free project. If anyone tries to resell it, please report them.</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="third-links-container" v-if="controlsLoaded.thirdLinks" :class="{'control-appear': controlsLoaded.thirdLinks}">
+            <div class="third-link">
+                <div class="third-icon">
+                    <img src="assets/images/icons/discord.svg" alt="Discord" width="24" height="24">
+                </div>
+                <div class="third-text">
+                    <div class="third-title">JOIN OUR DISCORD</div>
+                    <div class="third-link-text" onclick="joinDiscord()">interact with the community</div>
+                </div>
+            </div>
+            
+            <div class="third-link">
+                <div class="third-icon">
+                    <img src="assets/images/icons/telegram.svg" alt="Telegram" width="24" height="24">
+                </div>
+                <div class="third-text">
+                    <div class="third-title">JOIN OUR TELEGRAM</div>
+                    <div class="third-link-text" onclick="joinTelegram()">interact with the community</div>
+                </div>
+            </div>
+            
+            <div class="third-link">
+                <div class="third-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 21C16.9706 21 21 16.9706 21 12C21 7.02944 16.9706 3 12 3C7.02944 3 3 7.02944 3 12C3 16.9706 7.02944 21 12 21Z" stroke="#E3B62F" stroke-width="2"/>
+                        <path d="M9 12C9 10.3431 10.3431 9 12 9C13.6569 9 15 10.3431 15 12C15 13.6569 13.6569 15 12 15C10.3431 15 9 13.6569 9 12Z" fill="#E3B62F"/>
+                    </svg>
+                </div>
+                <div class="third-text">
+                    <div class="third-title">SUPPORT US</div>
+                    <div class="third-link-text" onclick="openSponsor()">sponsor the project</div>
+                </div>
+            </div>
+        </div>
+    </div>
+	
+ </div> <!-- closes id="app" -->
+ </div> <!-- closes main -->
+    <script src="assets/js/jquery-2.2.0.min.js"></script>
+    <script src="assets/js/jquery-ui-1.11.4.min.js"></script>
+    <script src="assets/js/jquery.selectBoxIt-3.8.1.min.js"></script>
+    <script src="assets/js/coherent.js"></script>
+    <script src="assets/js/coherent.mock.js"></script>
+    <script src="assets/js/mock.entry.js"></script>
+    <script src="assets/js/vue.js"></script>
+    <script src="assets/js/socket.io.min.js"></script>
+    <script src="assets/js/language.js"></script>
+    <script src="assets/js/serverList.js"></script>
+    <script>
+
+        var player = engine.trigger('GetClientAuthData')
+        // console.log("Yes");
+        
+        function joinDiscord() {
+            engine.trigger('OpenExternalBrowser', 'https://discord.gg/Q4pUgYwep5');
+        }
+        
+        function joinTelegram() {
+            engine.trigger('OpenExternalBrowser', 'https://t.me/ogbattlegrounds');
+        }
+        
+        function openWebsite() {
+            engine.trigger('OpenExternalBrowser', 'https://ogbattlegrounds.ru');
+        }
+        
+        function openGithub() {
+            engine.trigger('OpenExternalBrowser', 'https://github.com/h4tiux/PUBG2017PS');
+        }
+        
+        function openSponsor() {
+            engine.trigger('OpenExternalBrowser', 'https://xmrchat.com/h4tiux');
+        }
+        
+        function startLoading() {
+            var connectScreen = document.getElementById('connect-screen');
+            var loadingScreen = document.getElementById('loading-screen');
+            if (connectScreen) connectScreen.classList.add('hidden');
+            if (loadingScreen) loadingScreen.classList.add('visible');
+
+            // 开始监听资源加载
+            var preloadBg = document.getElementById('preload-bg');
+            if (preloadBg) {
+                if (preloadBg.complete && preloadBg.naturalWidth > 0) {
+                    app.resourcesLoaded.bg = true;
+                    app.checkAllResourcesLoaded();
+                } else {
+                    preloadBg.addEventListener('load', function() { app.onBgLoaded(); });
+                    preloadBg.addEventListener('error', function() { app.onBgError(); });
+                }
+            }
+            var loadingLogo = document.getElementById('loading-logo-img');
+            if (loadingLogo) {
+                if (loadingLogo.complete && loadingLogo.naturalWidth > 0) {
+                    app.resourcesLoaded.logo = true;
+                    app.checkAllResourcesLoaded();
+                } else {
+                    loadingLogo.addEventListener('load', function() { app.onLogoLoaded(); });
+                }
+            }
+        }
+
+        // 页面加载后等3秒自动进入加载界面
+        setTimeout(startLoading, 3000);
+        
+        function createRole() {
+	    engine.trigger('SetLobbyCamera')
+            engine.trigger('DestoryLobbyCharacter', 0)
+            engine.trigger('DestoryLobbyCharacter', 1)
+            engine.trigger('DestoryLobbyCharacter', 2)
+            engine.trigger('DestoryLobbyCharacter', 3)
+            engine.trigger('SetLobbyCharacterAngle',0,90)
+            engine.trigger('CreateLobbyCharacter', 0, false, "","Player")
+            engine.trigger('UpdateLobbyCharacter', 0,{
+                "Gender":false,
+                "BoolOptions":[],
+                "FloatOptions":[],
+                "StringOptions":[
+                    {"First":"Hair","Second":"F_Hair_A_01"},
+                    {"First":"Face","Second":"F_Face_01"},
+                    {"First":"NudeBody","Second":"F_NudeBody_01"},
+                ],"ItemIds":[]});
+        }
+
+        var app = new Vue({
+            el: '#app',
+            data: {
+                serverList: serverList,
+                teamList: ["SOLO", "DUO", "SQUAD"],
+                Player: "player",
+                BP: 1363,
+                userSerial: "userSerial",
+                currentServer: serverList[0],
+                currentTeam: "SOLO",
+                isDebug: false,
+                language: "zh-CN",
+                loaded: false,
+                langDisabled: localStorage.getItem('langDisabled') ? true : false,
+                showServerDropdown: false,
+                tickMarkEnabled: true,
+                isLoading: false,
+                showFriendsList: false,
+                loadingTextInterval: null,
+                friendsList: [
+                    { name: "H4TIUX", avatar: "assets/images/avatars/h4tiux.jpg", status: "online" },
+                    { name: "xXMrYashXx", avatar: "assets/images/avatars/yash.jpg", status: "online" },
+                    { name: "Kirito", avatar: "assets/images/avatars/kirito.jpg", status: "offline" },
+                    { name: "Land", avatar: "assets/images/avatars/land.jpg", status: "online" },
+                ],
+                selectedFriend: null,
+                showFriendActions: false,
+                activeTab: 'home',
+                playText: 'PLAY',
+                battlegroundsText: 'BATTLEGROUNDS',
+                isMatching: false,
+                showMatchmakingNotice: false,
+                showEmptyMessageNotice: false,
+                randomChars: '',
+                // watermarkLines: [],  // 水印数据已注释
+                loadingStage: 'connecting',
+                lobbyVisible: false,
+                controlsVisible: false,
+                animationsReady: false,
+                chatCollapsed: true,
+                resourcesLoaded: {
+                    bg: false,
+                    logo: false
+                },
+                controlsLoaded: {
+                    friendsBar: false,
+                    multiButton: false,
+                    announcementPanel: false,
+                    thirdLinks: false,
+                    playerInfo: false
+                },
+                controlLoadOrder: ['friendsBar', 'multiButton', 'announcementPanel', 'thirdLinks', 'playerInfo']
+            },
+            mounted: function() {
+                var loadingTextEl = document.getElementById('loading-stage-text');
+                if (loadingTextEl) {
+                    var texts = ['Loading resources...', 'Connected..Waiting for response...'];
+                    var index = 0;
+                    loadingTextEl.textContent = texts[0];
+                    this.loadingTextInterval = setInterval(function() {
+                        index = (index + 1) % texts.length;
+                        loadingTextEl.textContent = texts[index];
+                    }, 1500);
+                }
+            },
+            methods: {
+		    selectServer: function(server) {
+                    app.currentServer = server;
+                },
+                selectTeam: function(team) {
+                    app.currentTeam = team;
+                },
+                joinServer: function() {
+                    if (this.isMatching) {
+                        return; // 如果已经在匹配中，不重复执行
+                    }
+                    
+                    try {
+                        this.isMatching = true;
+                        this.isLoading = true;
+                        this.showServerDropdown = false; // 立即隐藏下拉框
+                        
+                        // 显示匹配开始通知，1秒后自动消失
+                        this.showMatchmakingNotice = true;
+                        var self = this;
+                        setTimeout(function() {
+                            self.showMatchmakingNotice = false;
+                        }, 1000);
+                        
+                        // 更新UI显示匹配状态
+                        this.playText = 'MATCHING';
+                        this.battlegroundsText = this.currentServer.name + ' / ' + this.currentTeam;
+                        
+                        // 保存Vue实例引用
+                        var self = this;
+                        
+                        // 生成5-35秒的随机等待时间
+                        var minWait = 5000; // 5秒（毫秒）
+                        var maxWait = 35000; // 35秒（毫秒）
+                        var randomWait = Math.floor(Math.random() * (maxWait - minWait + 1)) + minWait;
+                        
+                        // 保存定时器引用以便取消
+                        this.matchingTimer = setTimeout(function() {
+                            try {
+                                // 检查是否还在匹配状态
+                                if (self.isMatching && self.currentServer) {
+                                    engine.trigger('JoinToDedicatedServer', self.currentServer.ip);
+                                }
+                            } catch (e) {
+                                // 重置状态
+                                self.playText = 'PLAY';
+                                self.battlegroundsText = 'BATTLEGROUNDS';
+                                self.isLoading = false;
+                                self.isMatching = false;
+                            }
+                        }, randomWait);
+                        
+                    } catch (e) {
+                        this.playText = 'PLAY';
+                        this.battlegroundsText = 'BATTLEGROUNDS';
+                        this.isLoading = false;
+                        this.isMatching = false;
+                    }
+                },
+                cancelMatching: function() {
+                    if (this.isMatching) {
+                        // 清除定时器，强制停止随机数倒计时
+                        if (this.matchingTimer) {
+                            clearTimeout(this.matchingTimer);
+                            this.matchingTimer = null;
+                        }
+                        this.isMatching = false;
+                        this.playText = 'PLAY';
+                        this.battlegroundsText = 'BATTLEGROUNDS';
+                        this.isLoading = false;
+                    }
+                },
+                generateRandomChars: function() {
+                    var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+                    var result = '';
+                    for (var i = 0; i < 8; i++) {
+                        result += chars.charAt(Math.floor(Math.random() * chars.length));
+                    }
+                    this.randomChars = result;
+                    // 水印功能已注释 - this.generateWatermarkLines();
+                },
+                /* generateWatermarkLines 方法已注释 - 留以后开发
+                generateWatermarkLines: function() {
+                    var lines = [];
+                    var baseText1 = 'Development Version';
+                    var baseText2 = this.Player;
+                    var baseText3 = this.randomChars;
+                    var baseText4 = '2026/05/14';
+                    
+                    // 生成多行以覆盖整个屏幕（斜向排列）
+                    var cols = 8;
+                    var rows = 12;
+                    var spacingX = 180;
+                    var spacingY = 100;
+                    
+                    for (var row = 0; row < rows; row++) {
+                        for (var col = 0; col < cols; col++) {
+                            var lineIndex = (row + col) % 4;
+                            var text = '';
+                            if (lineIndex === 0) {
+                                text = baseText1;
+                            } else if (lineIndex === 1) {
+                                text = baseText2;
+                            } else if (lineIndex === 2) {
+                                text = baseText3;
+                            } else {
+                                text = baseText4;
+                            }
+                            
+                            lines.push({
+                                text: text,
+                                x: col * spacingX - row * 40,
+                                y: row * spacingY + col * 20
+                            });
+                        }
+                    }
+                    this.watermarkLines = lines;
+                },
+                水印方法结束 */
+                resetMatchingState: function() {
+                    this.playText = 'PLAY';
+                    this.battlegroundsText = 'BATTLEGROUNDS';
+                    this.isLoading = false;
+                    this.isMatching = false;
+                },
+                toggleLanguageAndRefresh: toggleLanguageAndRefresh,
+                l: l,
+                toggleTickMark: function() {
+                    this.tickMarkEnabled = !this.tickMarkEnabled;
+                },
+                toggleChat: function() {
+                    this.chatCollapsed = !this.chatCollapsed;
+                },
+                sendMessage: function() {
+                    sendChatMessage();
+                },
+                changeTab: function(tabName) {
+                    this.activeTab = tabName;
+                },
+                joinCustomMatch: function() {
+                    try {
+                        this.isLoading = true;
+                        // 打开自定义比赛链接
+                        engine.trigger('OpenExternalBrowser', 'https://ogbattlegrounds.com');
+                    } catch (e) {
+                        console.error('Error opening custom match link:', e);
+                        this.isLoading = false;
+                    }
+                },
+                toggleFriendsList: function() {
+                    this.showFriendsList = !this.showFriendsList;
+                    // 关闭好友操作菜单
+                    if (!this.showFriendsList) {
+                        this.showFriendActions = false;
+                        this.selectedFriend = null;
+                    }
+                },
+                selectFriend: function(friend) {
+                    if (this.selectedFriend && this.selectedFriend.name === friend.name) {
+                        // 如果点击的是已选中的好友，切换操作菜单显示状态
+                        this.showFriendActions = !this.showFriendActions;
+                    } else {
+                        // 选择新好友并显示操作菜单
+                        this.selectedFriend = friend;
+                        this.showFriendActions = true;
+                    }
+                },
+                viewFriendProfile: function() {
+                    console.log('Viewing profile of:', this.selectedFriend.name);
+                    // 这里可以添加查看好友资料的逻辑
+                    this.showFriendActions = false;
+                },
+                inviteFriend: function() {
+                    console.log('Inviting:', this.selectedFriend.name);
+                    // 这里可以添加邀请好友的逻辑
+                    this.showFriendActions = false;
+                },
+                onBgLoaded: function() {
+                    console.log('Background image loaded');
+                    this.resourcesLoaded.bg = true;
+                    this.checkAllResourcesLoaded();
+                },
+                onLogoLoaded: function() {
+                    console.log('Logo image loaded');
+                    this.resourcesLoaded.logo = true;
+                    this.checkAllResourcesLoaded();
+                },
+                checkAllResourcesLoaded: function() {
+                    if (this.resourcesLoaded.bg && this.resourcesLoaded.logo) {
+                        console.log('All resources loaded');
+                        this.loadingStage = 'full';
+                        if (this.loadingTextInterval) {
+                            clearInterval(this.loadingTextInterval);
+                            this.loadingTextInterval = null;
+                        }
+                        this.animationsReady = true;
+                        var self = this;
+                        setTimeout(function() {
+                            self.loaded = true;
+                            // 隐藏加载屏幕，显示大厅
+                            var loadingScreen = document.getElementById('loading-screen');
+                            if (loadingScreen) loadingScreen.classList.add('loaded');
+                            var appEl = document.getElementById('app');
+                            if (appEl) appEl.classList.add('loaded');
+                            setTimeout(function() {
+                                self.controlsVisible = true;
+                                self.loadControlsSequentially(0);
+                            }, 500);
+                        }, 3000);
+                    }
+                },
+                loadControlsSequentially: function(index) {
+                    if (index >= this.controlLoadOrder.length) {
+                        return;
+                    }
+                    var controlName = this.controlLoadOrder[index];
+                    this.controlsLoaded[controlName] = true;
+                    var self = this;
+                    setTimeout(function() {
+                        self.loadControlsSequentially(index + 1);
+                    }, 200);
+                },
+                onBgError: function() {
+                    console.error('Background image failed to load');
+                    this.resourcesLoaded.bg = true;
+                    this.checkAllResourcesLoaded();
+                },
+                cancelLoading: function() {
+                    this.loaded = true;
+                    var loadingScreen = document.getElementById('loading-screen');
+                    if (loadingScreen) loadingScreen.classList.add('loaded');
+                    var appEl = document.getElementById('app');
+                    if (appEl) appEl.classList.add('loaded');
+                }
+            }
+        });
+        
+
+        $().ready(function() {
+            app.language = localStorage.getItem('language') || navigator.language;
+            if (localStorage.getItem('langDisabled')) {
+                app.language = 'en'
+            }
+        })
+
+        window.onload = function () {
+            console.log("font loaded");
+
+            // 等待背景图加载完成
+            var checkBgLoaded = setInterval(function() {
+                if (app.loadingStage === 'full') {
+                    clearInterval(checkBgLoaded);
+                    createRole();
+                    var result = engine.call('GetClientAuthData');
+                    result.then(function (r) {
+                        app.userSerial = r.userSerial;
+                        app.Player = r.userSerial.toString().split('-')[0];
+                        app.generateRandomChars();
+                        
+                        // 更新聊天昵称（优先使用保存的自定义昵称）
+                        if (currentNickname === 'Player' || !currentNickname) {
+                            currentNickname = app.Player;
+                            app.Player = app.Player;
+                        } else {
+                            // 如果有自定义昵称，更新Vue显示
+                            app.Player = currentNickname;
+                        }
+                        
+                        // 如果聊天客户端已存在，更新用户名
+                        if (chatClient && chatClient.isConnected) {
+                            chatClient.setUsername(currentNickname);
+                            addSystemMessage('Logged in as: ' + currentNickname);
+                        } else if (chatClient) {
+                            chatClient.setUsername(currentNickname);
+                        }
+                    });
+                }
+            }, 100);
+        }
+
+
+
+        function toggleLanguage() {
+            var langDisabled = localStorage.getItem('langDisabled');
+            if (langDisabled) {
+                localStorage.removeItem('langDisabled');
+            } else {
+                localStorage.setItem('langDisabled', true);
+            }
+        }
+
+        function toggleLanguageAndRefresh() {
+            toggleLanguage();
+            location.reload();
+        }
+        
+        // 聊天系统初始化
+        var chatClient = null;
+        
+        function initChatSystem(playerName) {
+            try {
+                // 尝试从localStorage读取保存的昵称（7天内有效）
+                var savedNickname = null;
+                try {
+                    var savedData = localStorage.getItem('saved_nickname');
+                    if (savedData) {
+                        var parsed = JSON.parse(savedData);
+                        // 检查是否在7天内（7天 = 7 * 24 * 60 * 60 * 1000 = 604800000毫秒）
+                        if (parsed.timestamp && (Date.now() - parsed.timestamp < 604800000)) {
+                            savedNickname = parsed.nickname;
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Failed to read saved nickname:', e);
+                }
+                
+                // 更新当前昵称（优先使用保存的昵称）
+                currentNickname = savedNickname || playerName || 'Player';
+                
+                chatClient = new ChatClient();
+                
+                chatClient.onMessage(function(username, text) {
+                    addChatMessage(username, text);
+                });
+                
+                chatClient.onSystemMessage(function(text) {
+                    addSystemMessage(text);
+                });
+                
+                // 处理最近5条历史记录（重新连接时自动获取）
+                chatClient.onRecent(function(messages) {
+                    if (messages && messages.length > 0) {
+                        messages.forEach(function(msg) {
+                            if (msg.type === 'message') {
+                                addChatMessage(msg.username, msg.text);
+                            }
+                        });
+                    }
+                });
+                
+                chatClient.onConnected(function() {
+                    addSystemMessage('Connected');
+                    
+                    // 如果有自定义昵称，发送到服务器
+                    if (currentNickname !== 'Player') {
+                        chatClient.setUsername(currentNickname);
+                    }
+                });
+                
+                chatClient.onDisconnected(function() {
+                    addSystemMessage('Disconnected');
+                });
+                
+                chatClient.onConnectFailed(function(reason) {
+                    addSystemMessage('Connection failed: ' + reason);
+                });
+                
+                // 立即初始化
+                chatClient.init(playerName || 'Player');
+                
+            } catch (error) {
+                console.error('Chat init error:', error);
+            }
+        }
+        
+        // 客户端不文明词汇过滤（双重保障）
+        var PROHIBITED_WORDS = [
+            'fuck', 'shit', 'damn', 'ass', 'bitch', 'bastard', 'crap',
+            'dick', 'piss', 'hell', 'idiot', 'stupid', 'moron', 'jerk',
+            'loser', 'suck', 'sucks', 'sucking', 'sucker',
+            'caoni', 'nmb', 'tmd', 'nnd', 'woc', 'wocao', 'cao',
+            'sb', 'rzb', 'dsb', 'nc', 'nm', 'mlgb', 'laji',
+            'shabi', 'zhangbi', 'goubi', 'jiba', 'niubi',
+            '操', '草', '妈的', '妈卖批', '傻逼', '煞笔', '煞比', '傻B',
+            '狗日', '狗日的', '王八蛋', '混蛋', '滚犊子', '去死', '废物',
+            '垃圾', '贱人', '婊子', '娘炮', '二货', '脑残', '智障',
+            '神经病', '有病', '找死', '作死', '尼玛', '你妈', '操你',
+            '日你', '卧槽', '我靠', '我操', '干你', '草泥马', '草你妈',
+            '他妈', '他吗', '特么', '他妈的', '特么的', '大爷的',
+            '奶奶的', '爷爷的', '祖宗的', '靠', '艹', '屌', '逼'
+        ];
+        
+        function filterProhibitedWords(text) {
+            if (!text) return text;
+            
+            var filteredText = text;
+            
+            for (var i = 0; i < PROHIBITED_WORDS.length; i++) {
+                var word = PROHIBITED_WORDS[i];
+                
+                // 判断是否为中文（包含中文字符）
+                var isChinese = /[\u4e00-\u9fa5]/.test(word);
+                
+                if (isChinese) {
+                    // 中文词汇：直接匹配
+                    if (filteredText.indexOf(word) !== -1) {
+                        var replacement = '';
+                        for (var j = 0; j < word.length; j++) {
+                            replacement += '*';
+                        }
+                        // 替换所有出现的位置
+                        filteredText = filteredText.split(word).join(replacement);
+                    }
+                } else {
+                    // 英文词汇：不区分大小写匹配
+                    var wordLower = word.toLowerCase();
+                    if (filteredText.toLowerCase().indexOf(wordLower) !== -1) {
+                        var replacement = '';
+                        for (var k = 0; k < word.length; k++) {
+                            replacement += '*';
+                        }
+                        // 使用正则表达式进行大小写不敏感的替换
+                        try {
+                            var regex = new RegExp(word, 'gi');
+                            filteredText = filteredText.replace(regex, replacement);
+                        } catch(e) {
+                            console.error('Regex error:', e);
+                        }
+                    }
+                }
+            }
+            
+            return filteredText;
+        }
+        
+        function addChatMessage(username, text) {
+            var messages = document.querySelector('.chat-messages');
+            if (messages) {
+                // 限制最大消息数量，防止性能问题
+                var maxMessages = 100;
+                while (messages.children.length > maxMessages) {
+                    messages.removeChild(messages.firstChild);
+                }
+                
+                // 客户端再次过滤（双重保障）
+                var filteredText = filterProhibitedWords(text);
+                
+                var newMessage = document.createElement('div');
+                newMessage.className = 'chat-message';
+                newMessage.innerHTML = '<span class="chat-username">' + username + '</span><span class="chat-text">' + filteredText + '</span>';
+                messages.appendChild(newMessage);
+                
+                // 更新最新消息预览
+                updateLatestMessagePreview(username + ': ' + filteredText);
+                
+                // 强制滚动到底部（多种方式确保兼容）
+                setTimeout(function() {
+                    messages.scrollTop = messages.scrollHeight;
+                    messages.scrollTo(0, messages.scrollHeight);
+                }, 0);
+            }
+        }
+        
+        function addSystemMessage(text) {
+            var messages = document.querySelector('.chat-messages');
+            if (messages) {
+                // 限制最大消息数量
+                var maxMessages = 100;
+                while (messages.children.length > maxMessages) {
+                    messages.removeChild(messages.firstChild);
+                }
+                
+                var newMessage = document.createElement('div');
+                newMessage.className = 'chat-message system-message';
+                newMessage.innerHTML = '<span class="chat-text system-text">' + text + '</span>';
+                messages.appendChild(newMessage);
+                
+                // 更新最新消息预览（系统消息用不同格式）
+                updateLatestMessagePreview('System: ' + text);
+                
+                // 强制滚动到底部
+                setTimeout(function() {
+                    messages.scrollTop = messages.scrollHeight;
+                    messages.scrollTo(0, messages.scrollHeight);
+                }, 0);
+            }
+        }
+        
+        // 更新最新消息预览
+        function updateLatestMessagePreview(messageText) {
+            var previewElement = document.getElementById('latest-message-text');
+            if (previewElement) {
+                previewElement.textContent = messageText;
+            }
+        }
+        
+        function sendChatMessage() {
+            var input = document.querySelector('.chat-input');
+            
+            // 检测输入是否为空
+            if (!input || !input.value.trim()) {
+                app.showEmptyMessageNotice = true;
+                setTimeout(function() {
+                    app.showEmptyMessageNotice = false;
+                }, 1000);
+                
+                if (input) input.value = '';
+                return;
+            }
+            
+            if (chatClient) {
+                var messageText = input.value.trim();
+                chatClient.sendMessage(messageText);
+                input.value = '';
+            }
+        }
+        
+        // 禁言状态处理
+        var isMuted = false;
+        var muteEndTime = null;
+        var muteTimer = null;
+        
+        function handleMuteStatus(muted, duration, endTime) {
+            try {
+                var chatInput = document.querySelector('.chat-input');
+                var chatSendBtn = document.querySelector('.chat-send');
+                
+                if (muted) {
+                    // 被禁言
+                    isMuted = true;
+                    
+                    // 兼容游戏环境：优先使用duration计算结束时间，避免Date解析ISO格式失败
+                    if (duration && duration > 0) {
+                        // 使用当前时间 + duration计算结束时间（最可靠的方式）
+                        muteEndTime = new Date(Date.now() + duration * 1000);
+                    } else if (endTime) {
+                        // 尝试解析endTime（可能不兼容）
+                        try {
+                            var parsedEnd = new Date(endTime);
+                            // 检查是否有效日期
+                            if (!isNaN(parsedEnd.getTime())) {
+                                muteEndTime = parsedEnd;
+                            } else {
+                                // 无效日期，设置默认60秒
+                                muteEndTime = new Date(Date.now() + 60000);
+                            }
+                        } catch(e) {
+                            // 解析失败，使用默认值
+                            muteEndTime = new Date(Date.now() + 60000);
+                        }
+                    } else {
+                        // 都没有，使用默认60秒
+                        muteEndTime = new Date(Date.now() + 60000);
+                    }
+                    
+                    // 禁用输入框和发送按钮（兼容游戏环境）
+                    if (chatInput) {
+                        try {
+                            chatInput.disabled = true;
+                            chatInput.placeholder = 'You are muted...';
+                            chatInput.style.backgroundColor = 'rgba(220, 53, 69, 0.1)';
+                            chatInput.style.cursor = 'not-allowed';
+                        } catch(e) {}
+                    }
+                    
+                    if (chatSendBtn) {
+                        try {
+                            chatSendBtn.disabled = true;
+                            chatSendBtn.style.opacity = '0.5';
+                            chatSendBtn.style.cursor = 'not-allowed';
+                        } catch(e) {}
+                    }
+                    
+                    // 显示禁言提示
+                    addSystemMessage('You have been muted. You cannot send messages.');
+                    
+                    // 启动倒计时更新（兼容游戏环境）
+                    updateMuteStatus();
+                    if (muteTimer) {
+                        try { clearInterval(muteTimer); } catch(e) {}
+                    }
+                    try {
+                        muteTimer = setInterval(function() {
+                            try { updateMuteStatus(); } catch(e) {}
+                        }, 1000);
+                    } catch(e) {}
+                    
+                } else {
+                    // 解除禁言
+                    isMuted = false;
+                    muteEndTime = null;
+                    
+                    if (muteTimer) {
+                        try { clearInterval(muteTimer); } catch(e) {}
+                        muteTimer = null;
+                    }
+                    
+                    // 恢复输入框和发送按钮（兼容游戏环境）
+                    if (chatInput) {
+                        try {
+                            chatInput.disabled = false;
+                            chatInput.placeholder = 'Type message...';
+                            chatInput.style.backgroundColor = '';
+                            chatInput.style.cursor = '';
+                        } catch(e) {}
+                    }
+                    
+                    if (chatSendBtn) {
+                        try {
+                            chatSendBtn.disabled = false;
+                            chatSendBtn.style.opacity = '';
+                            chatSendBtn.style.cursor = '';
+                        } catch(e) {}
+                    }
+                    
+                    addSystemMessage('You have been unmuted. You can now send messages.');
+                }
+            } catch(e) {
+                console.error('Error in handleMuteStatus:', e);
+            }
+        }
+        
+        // 更新禁言状态显示
+        function updateMuteStatus() {
+            try {
+                if (!isMuted || !muteEndTime) return;
+                
+                var now = new Date();
+                
+                // 安全检查：确保muteEndTime是有效的Date对象
+                var endTimeValue = 0;
+                try {
+                    endTimeValue = muteEndTime.getTime();
+                    if (isNaN(endTimeValue)) {
+                        // 如果无效，重新计算
+                        console.warn('Invalid muteEndTime, recalculating');
+                        handleMuteStatus(false);
+                        return;
+                    }
+                } catch(e) {
+                    handleMuteStatus(false);
+                    return;
+                }
+                
+                var nowValue = now.getTime();
+                var diff = endTimeValue - nowValue;
+                var remaining = Math.max(0, Math.floor(diff / 1000));
+                
+                // 防止异常值（如果剩余时间超过1天，说明计算错误）
+                if (remaining > 86400) {
+                    console.warn('Abnormal mute time detected:', remaining, 'seconds');
+                    handleMuteStatus(false);
+                    return;
+                }
+                
+                var chatInput = document.querySelector('.chat-input');
+                if (chatInput && remaining > 0) {
+                    var minutes = Math.floor(remaining / 60);
+                    var seconds = remaining % 60;
+                    // 兼容游戏环境：不使用padStart和模板字符串
+                    var secStr = seconds < 10 ? '0' + seconds : '' + seconds;
+                    chatInput.placeholder = 'Muted: ' + minutes + ':' + secStr + ' remaining';
+                } else if (remaining <= 0) {
+                    // 自动解除禁言（服务器端应该已经处理，但作为备用）
+                    handleMuteStatus(false);
+                }
+            } catch(e) {}
+        }
+        
+        // 显示错误提示
+        function showErrorNotice(message) {
+            try {
+                addSystemMessage('Warning: ' + message);
+                
+                // 闪烁输入框提示错误
+                var chatInput = document.querySelector('.chat-input');
+                if (chatInput) {
+                    try {
+                        chatInput.style.animation = 'none';
+                        setTimeout(function() {
+                            try {
+                                chatInput.style.animation = 'shake 0.5s ease-in-out';
+                            } catch(e) {}
+                        }, 10);
+                    } catch(e) {}
+                }
+            } catch(e) {}
+        }
+        
+        // 昵称编辑系统
+        var currentNickname = 'Player';
+        var nicknameEditVisible = false;
+        
+        function toggleNicknameEdit() {
+            var editContainer = document.getElementById('nickname-edit');
+            
+            if (nicknameEditVisible) {
+                hideNicknameEdit();
+            } else {
+                showNicknameEdit();
+            }
+        }
+        
+        function showNicknameEdit() {
+            var editContainer = document.getElementById('nickname-edit');
+            var nicknameInput = document.getElementById('nickname-input');
+            var saveBtn = document.getElementById('nickname-save-btn');
+            var cancelBtn = document.getElementById('nickname-cancel-btn');
+            var playerNameEl = document.getElementById('chat-username');
+            
+            if (editContainer && nicknameInput && playerNameEl) {
+                // 动态定位到玩家名称下方
+                var rect = playerNameEl.getBoundingClientRect();
+                editContainer.style.position = 'fixed';
+                editContainer.style.top = (rect.bottom + 5) + 'px';
+                editContainer.style.right = (window.innerWidth - rect.right) + 'px';
+                
+                editContainer.style.display = 'flex';
+                nicknameInput.value = currentNickname;
+                nicknameEditVisible = true;
+                
+                // 绑定按钮点击事件（使用原生JavaScript）
+                if (saveBtn) {
+                    saveBtn.onclick = function(e) {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        saveNickname();
+                    };
+                }
+                
+                if (cancelBtn) {
+                    cancelBtn.onclick = function(e) {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        cancelNickname();
+                    };
+                }
+                
+                // 绑定输入框键盘事件
+                nicknameInput.onkeydown = function(e) {
+                    // 阻止所有按键的默认行为和冒泡，防止编辑框消失
+                    e.stopPropagation();
+                    
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        saveNickname();
+                    } else if (e.key === 'Escape') {
+                        e.preventDefault();
+                        cancelNickname();
+                    }
+                };
+                
+                // 阻止编辑容器上的其他事件冒泡
+                editContainer.onmousedown = function(e) {
+                    e.stopPropagation();
+                };
+                
+                editContainer.onclick = function(e) {
+                    e.stopPropagation();
+                };
+                
+                // 延迟聚焦，确保DOM已更新和事件绑定完成
+                setTimeout(function() {
+                    nicknameInput.focus();
+                }, 100);
+            }
+        }
+        
+        function hideNicknameEdit() {
+            var editContainer = document.getElementById('nickname-edit');
+            
+            if (editContainer) {
+                editContainer.style.display = 'none';
+                nicknameEditVisible = false;
+            }
+        }
+        
+        function saveNickname() {
+            var nicknameInput = document.getElementById('nickname-input');
+            
+            if (!nicknameInput) return;
+            
+            var newNickname = nicknameInput.value.trim();
+            
+            if (!newNickname) {
+                app.showEmptyMessageNotice = true;
+                setTimeout(function() { app.showEmptyMessageNotice = false; }, 1000);
+                return;
+            }
+            
+            if (newNickname.length > 20) {
+                newNickname = newNickname.substring(0, 20);
+            }
+            
+            currentNickname = newNickname;
+            
+            // 持久化保存到localStorage（7天过期）
+            try {
+                var nicknameData = {
+                    nickname: newNickname,
+                    timestamp: Date.now()
+                };
+                localStorage.setItem('saved_nickname', JSON.stringify(nicknameData));
+            } catch (e) {
+                console.warn('Failed to save nickname:', e);
+            }
+            
+            // 同步更新Vue的Player变量（Vue会自动更新显示）
+            if (typeof app !== 'undefined' && app.Player !== undefined) {
+                app.Player = newNickname;
+            }
+            
+            if (chatClient && chatClient.isConnected) {
+                chatClient.setUsername(newNickname);
+                addSystemMessage('Nickname changed to: ' + newNickname);
+            } else {
+                addSystemMessage('Nickname saved (will update when connected)');
+            }
+            
+            hideNicknameEdit();
+        }
+        
+        function cancelNickname() {
+            hideNicknameEdit();
+        }
+        
+        // 修复聊天消息区域滚动问题（游戏环境兼容）
+        function fixChatScroll() {
+            var messages = document.querySelector('.chat-messages');
+            if (messages) {
+                // 强制设置overflow属性
+                messages.style.overflowY = 'scroll';
+                messages.style.overflowX = 'hidden';
+                messages.style.minHeight = '0';
+                
+                // 计算并设置最大高度
+                var chatBox = document.querySelector('.chat-box');
+                if (chatBox) {
+                    var headerHeight = chatBox.querySelector('.chat-header') ? chatBox.querySelector('.chat-header').offsetHeight : 40;
+                    var inputContainerHeight = chatBox.querySelector('.chat-input-container') ? chatBox.querySelector('.chat-input-container').offsetHeight : 50;
+                    var maxHeight = chatBox.offsetHeight - headerHeight - inputContainerHeight - 10;
+                    messages.style.maxHeight = maxHeight + 'px';
+                }
+            }
+        }
+        
+        // 定期检查并修复滚动
+        setInterval(fixChatScroll, 1000);
+        window.addEventListener('resize', fixChatScroll);
+        
+        // 全局键盘事件拦截（防止编辑框打开时按键导致消失）
+        document.addEventListener('keydown', function(e) {
+            if (nicknameEditVisible) {
+                var nicknameInput = document.getElementById('nickname-input');
+                // 如果焦点在输入框内，不阻止（让输入框的onkeydown处理）
+                if (document.activeElement !== nicknameInput) {
+                    e.stopPropagation();
+                }
+            }
+        }, true);
+        
+        // 窗口大小改变时重新定位编辑框
+        window.addEventListener('resize', function() {
+            if (nicknameEditVisible) {
+                showNicknameEdit();
+            }
+        });
+    </script>
+    
+    <!-- 聊天客户端代码（内联，兼容游戏环境） -->
+    <script>
+var ChatClient = function() {
+    this.socket = null;
+    this.isConnected = false;
+    this.username = 'Anonymous';
+    this.connectUrl = 'ws://127.0.0.1:8765';
+    
+    this.onMessageCallback = null;
+    this.onSystemMessageCallback = null;
+    this.onConnectedCallback = null;
+    this.onDisconnectedCallback = null;
+    this.onConnectFailedCallback = null;
+    this.onRecentCallback = null;
+    
+    var self = this;
+    
+    this.init = function(playerName) {
+        self.username = playerName || 'Player';
+        self.connect();
+    };
+    
+    this.connect = function() {
+        if (typeof WebSocket === 'undefined') {
+            if (self.onConnectFailedCallback) { try { self.onConnectFailedCallback('No WebSocket'); } catch(e) {} }
+            return;
+        }
+        
+        try {
+            var ws = new WebSocket(self.connectUrl);
+            
+            var timer = setTimeout(function() {
+                try { ws.close(); } catch(e) {}
+                if (self.onConnectFailedCallback) { try { self.onConnectFailedCallback('Timeout'); } catch(e) {} }
+            }, 3000);
+            
+            ws.onopen = function() {
+                clearTimeout(timer);
+                self.socket = ws;
+                self.isConnected = true;
+                
+                // 发送登录消息
+                try { ws.send(JSON.stringify({type:'login', username:self.username})); } catch(e) {}
+                
+                // 登录后立即请求最近5条历史记录
+                try {
+                    ws.send(JSON.stringify({type:'get_recent', count:5}));
+                } catch(e) {}
+                
+                if (self.onConnectedCallback) { try { self.onConnectedCallback(); } catch(e) {} }
+            };
+            
+            ws.onmessage = function(e) {
+                try {
+                    var m = JSON.parse(e.data);
+                    if (m.type === 'message' && self.onMessageCallback) {
+                        self.onMessageCallback(m.username, m.text);
+                    } else if (m.type === 'system' && self.onSystemMessageCallback) {
+                        self.onSystemMessageCallback(m.text);
+                    } else if (m.type === 'recent' && self.onRecentCallback) {
+                        // 处理最近历史记录
+                        self.onRecentCallback(m.messages);
+                    } else if (m.type === 'muted') {
+                        // 被禁言通知
+                        try { handleMuteStatus(true, m.duration, m.end_time); } catch(e) {}
+                    } else if (m.type === 'unmuted') {
+                        // 解除禁言通知
+                        try { handleMuteStatus(false); } catch(e) {}
+                    } else if (m.type === 'error') {
+                        // 错误消息（如被禁言时尝试发送）
+                        // 兼容游戏环境：使用indexOf替代includes
+                        if (m.text && m.text.indexOf('muted') !== -1) {
+                            try { showErrorNotice(m.text); } catch(e) {}
+                        }
+                    }
+                } catch(err) {}
+            };
+            
+            ws.onerror = function() {
+                clearTimeout(timer);
+                try { ws.close(); } catch(e) {}
+                if (self.onConnectFailedCallback) { try { self.onConnectFailedCallback('Error'); } catch(e) {} }
+            };
+            
+            ws.onclose = function(e) {
+                self.isConnected = false;
+                self.socket = null;
+                if (self.onDisconnectedCallback) { try { self.onDisconnectedCallback(); } catch(ex) {} }
+            };
+            
+        } catch(e) {
+            if (self.onConnectFailedCallback) { try { self.onConnectFailedCallback('Exception'); } catch(ex) {} }
+        }
+    };
+    
+    this.sendMessage = function(text) {
+        if (!self.isConnected || !self.socket || !text || !text.trim()) return;
+        try { self.socket.send(JSON.stringify({type:'message', text:text.trim()})); } catch(e) {}
+    };
+    
+    this.setUsername = function(name) {
+        self.username = name;
+        if (self.isConnected && self.socket) {
+            try { self.socket.send(JSON.stringify({type:'login', username:name})); } catch(e) {}
+        }
+    };
+    
+    this.onMessage = function(cb) { self.onMessageCallback = cb; };
+    this.onSystemMessage = function(cb) { self.onSystemMessageCallback = cb; };
+    this.onConnected = function(cb) { self.onConnectedCallback = cb; };
+    this.onDisconnected = function(cb) { self.onDisconnectedCallback = cb; };
+    this.onConnectFailed = function(cb) { self.onConnectFailedCallback = cb; };
+    this.onRecent = function(cb) { self.onRecentCallback = cb; };
+    
+    this.disconnect = function() {
+        try { if(self.socket) self.socket.close(); } catch(e) {}
+        self.socket = null;
+        self.isConnected = false;
+    };
+};
+    </script>
+    
+    <script>
+        // 初始化聊天系统
+        initChatSystem('Player');
+    </script>
+</body>
