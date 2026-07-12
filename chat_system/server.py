@@ -4,6 +4,7 @@ import websockets
 import json
 import uuid
 import os
+import ssl
 from datetime import datetime, timedelta
 
 # 存储所有连接的客户端
@@ -391,16 +392,22 @@ async def main():
     # 初始化日志文件
     init_log_file()
     
-    async with websockets.serve(handle_client, "0.0.0.0", 8765):
+    # 配置SSL上下文
+    ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+    cert_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cert.pem")
+    key_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "key.pem")
+    ssl_context.load_cert_chain(certfile=cert_path, keyfile=key_path)
+    
+    async with websockets.serve(handle_client, "0.0.0.0", 8765, ssl=ssl_context):
         print("=" * 50)
         print("Chat Server Started")
         print(f"Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        print("Listening on ws://0.0.0.0:8765")
+        print("Listening on wss://0.0.0.0:8765")
         print(f"Log file: {LOG_FILE}")
         print("=" * 50)
         
         # 记录服务器启动事件
-        log_event("SERVER", "Server started on ws://0.0.0.0:8765")
+        log_event("SERVER", "Server started on wss://0.0.0.0:8765")
         
         await asyncio.Future()  # 无限运行
 
