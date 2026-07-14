@@ -26,7 +26,7 @@ var serverList = [
 //description 默认不显示，但必须保留该参数。
         description: "European Server",
 //ip 控制玩家连接的服务器地址
-        ip: "107.149.153.36:8888" 
+        ip: "143.14.163.92" 
 
     }
 ]
