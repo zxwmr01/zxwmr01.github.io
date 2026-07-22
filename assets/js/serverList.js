@@ -16,7 +16,7 @@ var serverList = [
 //description 默认不显示，但必须保留该参数。
         description: "European Server",
 //ip 控制玩家连接的服务器地址
-        ip: "stupidpieceofshit.space:8888" 
+        ip: "217.199.220.41:7777" 
 
     },
 
