@@ -1,14 +1,4 @@
 var serverList = [
-
-    {
-//name 控制在大厅显示的名称。
-        name: "AS SERVER",
-//description 默认不显示，但必须保留该参数。
-        description: "Asia Server",
-//ip 控制玩家连接的服务器地址
-        ip: "202.189.23.245:24080" 
-
-    },
     
     {
 //name 控制在大厅显示的名称。
@@ -19,14 +9,14 @@ var serverList = [
         ip: "217.199.220.41:7777" 
 
     },
-
+    
     {
 //name 控制在大厅显示的名称。
-        name: "SA SERVER",
+        name: "AS SERVER",
 //description 默认不显示，但必须保留该参数。
-        description: "South America Server",
+        description: "Asia Server",
 //ip 控制玩家连接的服务器地址
-        ip: "143.14.163.92" 
+        ip: "202.189.23.245:24080" 
 
     }
 ]
