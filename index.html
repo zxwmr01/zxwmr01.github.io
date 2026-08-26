@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Community Lobby</title>
+
+    <!-- 兼容性 polyfill -->
+    <script>
+        // console polyfill (Coherent UI 兼容)
+        (function() {
+            if (typeof window.console === 'undefined') {
+                window.console = { log: function(){}, error: function(){}, warn: function(){}, info: function(){}, debug: function(){} };
+            }
+            var methods = ['log','error','warn','info','debug','dir','trace','time','timeEnd'];
+            for (var i = 0; i < methods.length; i++) {
+                if (typeof console[methods[i]] !== 'function') {
+                    console[methods[i]] = function() {};
+                }
+            }
+        })();
+
+        // Object.assign polyfill (ES5 兼容)
+        if (typeof Object.assign !== 'function') {
+            Object.assign = function(target) {
+                if (target == null) throw new TypeError('Cannot convert undefined or null to object');
+                target = Object(target);
+                for (var i = 1; i < arguments.length; i++) {
+                    var src = arguments[i];
+                    if (src != null) {
+                        for (var key in src) {
+                            if (Object.prototype.hasOwnProperty.call(src, key)) {
+                                target[key] = src[key];
+                            }
+                        }
+                    }
+                }
+                return target;
+            };
+        }
+    </script>
+
+    <!-- 全局配置 -->
+    <script>
+        var globalScope = null;
+        var broConfiguration = {
+            "useSecure": false,
+            "verreq": "2.6.30",
+            "LayoutMode": "",
+            "LanpartyHome": ""
+        };
+        var production = false;
+        var _dev = false;
+    </script>
+
+    <!-- 字体 -->
+    <link rel="stylesheet" href="assets/fonts/agency.css">
+    <link rel="stylesheet" href="assets/fonts/overpass.css">
+
+    <!-- 样式 -->
+    <link rel="stylesheet" href="assets/css/style.css">
+
+    <style id="fontStyle"></style>
+</head>
+<body oncontextmenu="return false;">
+
+    <!-- 应用根容器 -->
+    <div id="lobby-root">
+        <lobby-app></lobby-app>
+    </div>
+
+    <!-- ==================== 第三方库 ==================== -->
+
+    <script src="assets/js/jquery-3.7.1.min.js"></script>
+    <script src="assets/js/coherent.js"></script>
+    <script src="assets/js/coherent.mock.js"></script>
+    <script src="assets/js/mock.entry.js"></script>
+    <script src="assets/js/redux.min.js"></script>
+    <script src="assets/js/rxjs.min.js"></script>
+    <script src="assets/js/angular.min.js"></script>
+
+    <!-- Angular + Redux 桥接 -->
+    <script>
+    (function() {
+        'use strict';
+
+        angular.module('ngRedux', [])
+        .provider('$ngRedux', function() {
+            var provider = this;
+            var _store = null;
+
+            provider.provideStore = function(store) {
+                _store = store;
+                return provider;
+            };
+
+            provider.configureStore = function(reducer, initialState, middleware) {
+                provider._reducer = reducer;
+                provider._initialState = initialState;
+                provider._middleware = middleware || [];
+                return provider;
+            };
+
+            this.$get = ['$rootScope', function($rootScope) {
+                var store = _store;
+                if (!store) throw new Error('$ngRedux: No store provided.');
+
+                function safeApply() {
+                    if (!$rootScope.$$phase && !$rootScope.$root.$$phase) {
+                        $rootScope.$apply();
+                    }
+                }
+
+                function connect(mapState, mapDispatch) {
+                    return function(target) {
+                        if (mapState) {
+                            var s = mapState(store.getState());
+                            for (var k in s) if (s.hasOwnProperty(k)) target[k] = s[k];
+                        }
+                        if (mapDispatch) {
+                            var b = Redux.bindActionCreators(mapDispatch, store.dispatch);
+                            for (var d in b) if (b.hasOwnProperty(d)) target[d] = b[d];
+                        } else {
+                            target.dispatch = store.dispatch;
+                        }
+                        var unsub = store.subscribe(function() {
+                            if (mapState) {
+                                var ns = mapState(store.getState());
+                                var changed = false;
+                                for (var sk in ns) {
+                                    if (ns.hasOwnProperty(sk) && target[sk] !== ns[sk]) {
+                                        target[sk] = ns[sk];
+                                        changed = true;
+                                    }
+                                }
+                                if (changed) safeApply();
+                            }
+                        });
+                        return unsub;
+                    };
+                }
+
+                return {
+                    getState: function() { return store.getState(); },
+                    dispatch: function(a) { var r = store.dispatch(a); safeApply(); return r; },
+                    subscribe: function(l) { return store.subscribe(function(){ l(); safeApply(); }); },
+                    connect: connect,
+                    replaceReducer: function(r) { return store.replaceReducer(r); },
+                    getStore: function() { return store; }
+                };
+            }];
+        });
+    })();
+    </script>
+
+    <!-- ==================== 应用代码 ==================== -->
+
+    <script src="assets/js/serverList.js"></script>
+    <script src="assets/js/ping.js"></script>
+    <script src="assets/js/app/store.js"></script>
+    <script src="assets/js/app/app.js"></script>
+    <script src="assets/js/app/services.js"></script>
+    <script src="assets/js/app/components.js"></script>
+
+    <!-- ==================== 启动 ==================== -->
+    <script>
+    (function() {
+        // 浏览器检测
+        var ua = navigator.userAgent;
+        if (ua.indexOf('Chrome/') > 0) {
+            var v = parseInt(ua.substr(ua.indexOf('Chrome/') + 7, 2), 10);
+            if (v >= 53) {
+                _dev = true;
+                document.body.className += ' chrome';
+            }
+        }
+
+        var started = false;
+
+        function start() {
+            if (started) return;
+            started = true;
+            var root = document.getElementById('lobby-root');
+            if (root) angular.bootstrap(root, ['lobbyApp']);
+        }
+
+        // 游戏环境等待 engine Ready，浏览器直接启动
+        if (typeof engine !== 'undefined' && engine.isAttached) {
+            engine.on('Ready', start);
+            // 安全兜底
+            setTimeout(start, 5000);
+        } else {
+            start();
+        }
+    })();
+    </script>
+
+</body>
+</html>
