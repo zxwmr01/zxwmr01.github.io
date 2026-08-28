@@ -8,10 +8,5 @@ var serverList = [
         name: "EU SERVER",
         description: "European Server",
         ip: "stupidpieceofshit.space:8888"
-    },
-    {
-        name: "SA SERVER",
-        description: "South America Server",
-        ip: "107.149.153.36:8888"
     }
 ];
