@@ -1,5 +1,5 @@
 # pubg-lobby
-A lobby for PUBG2017PS Project, made by H4TIUX, lobby based on wtbdev
+A lobby for PUBG2017PS Project, made by zxwmr01, lobby based on wtbdev
 
 # LICENSE NOTICE 
 This project is licensed under the GNU General Public License v3.0 (GPLv3).
