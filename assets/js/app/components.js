@@ -384,7 +384,7 @@
     // LoadingScreen
     function LoadingScreenController($scope, $interval, $ngRedux) {
         var ctrl = this;
-        var texts = ['Loading resources...', 'Connected..Waiting for response...'];
+        var texts = ['Initializing..', 'Connected..Waiting for response...'];
         var index = 0;
         ctrl.loadingText = texts[0];
 
